@@ -1,0 +1,106 @@
+<?php
+/* vim: set tabstop=2: */
+//$Id$
+/**
+ * @file
+ * Contains functionality and content types associated with the Voluntary module
+ */
+function voluntary_help($path, $arg) {
+  if ($path == 'admin/help#voluntary') {
+    $txt = 'Voluntary allows the creation and tracking of data '
+      . 'with regard to the activities of participants in a '
+      . 'voluntary programme where participation is rewarded';
+    $replace = array();
+    return '<p>' . t($txt, $replace) . '</p>';
+  }
+}
+
+function voluntary_block($op='list', $delta=0, $edit=array()) {
+  $blocks = array();
+  switch ($op) {
+  case 'list':
+    $blocks[0]['info'] = t('Voluntary');
+    break;
+  case 'view':
+    $blocks['subject'] = t('Blah!');
+    $blocks['content'] = menu_tree('voluntary');
+    break;
+  }
+  return $blocks;
+}
+
+function voluntary_menu() {
+  $items = array();
+
+  $items['voluntary/branch'] = array(
+    'title' => 'Manage Branches',
+    'page callback' => 'voluntary_manage_branches',
+    'page arguments' => array(),
+    'description' => 'Add, View or Remove Branches',
+    'access arguments' => array('access voluntary info'),
+    'menu_name' => 'voluntary'
+    );
+
+  $items['voluntary/list-branches.json'] = array(
+    'title' => 'Voluntary list branch data',
+    'access callback' => 'user_access',
+    'page callback' => 'voluntary_list_branches',
+    'page arguments' => array(),
+    'access arguments' => array('access voluntary info'),
+    'type' => MENU_CALLBACK,
+    );
+
+  $items['voluntary/save-branch.json'] = array(
+    'title' => 'Voluntary save branch data',
+    'access callback' => 'user_access',
+    'page callback' => 'voluntary_save_branch',
+    'page arguments' => array(),
+    'access arguments' => array('access voluntary info'),
+    'type' => MENU_CALLBACK,
+    );
+
+  return $items;
+}
+
+function voluntary_manage_branches() {
+  // global $user;
+  $path = drupal_get_path('module', 'voluntary');
+  drupal_add_js($path . '/manage_branches.js', 'module');
+
+  $path_to_list_branches = url('voluntary/list-branches.json', array('absolute' => TRUE));
+  drupal_add_js(array('voluntary' => array('list_branches_url' => $path_to_list_branches)), 'setting');
+
+  $path_to_save_branches = url('voluntary/save-branch.json', array('absolute' => TRUE));
+  drupal_add_js(array('voluntary' => array('save_branches_url' => $path_to_save_branches)), 'setting');
+
+  $output = "<div id='voluntary_container'><div id='voluntary_view_branches'></div><div id='voluntary_add_branch'></div><div id='voluntary_update_branch'></div></div>";
+  return $output;
+}
+
+function voluntary_list_branches() {
+  $output=array();
+  drupal_set_header('Content-Type: text/plain; charset: utf-8');
+  $result = db_query('SELECT id, name FROM {voluntary_branches}');
+  while($record = db_fetch_array($result)) {
+    $output[] = $record;
+  }
+  echo  json_encode($output);
+  return;
+}
+
+function voluntary_save_branch() {
+  if ( !empty($_POST['name']) && !empty($_POST['id']) ){
+    $pars = array('name' => $_POST['name'], 'id' => $_POST['id']);
+    drupal_write_record('voluntary_branches', $pars, array('id'));
+    echo json_encode( array('id' => $_POST['id']));
+  }
+  else if ( !empty($_POST['name']) ){
+    $pars = array('name' => $_POST['name']);
+    drupal_write_record('voluntary_branches', $pars);
+    echo json_encode( array('id' => db_last_insert_id('voluntary_branches', 'id')));
+  }
+  return;
+}
+function voluntary_perm() {
+  return array('access voluntary info');
+}

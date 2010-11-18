@@ -1,0 +1,5 @@
+; $Id$
+name = "Voluntary"
+description = "A module that can be used to capture and track the activities of participants in a volunteer education programme"
+core = 6.x
+php = 5.2.6

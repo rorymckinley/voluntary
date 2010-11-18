@@ -1,0 +1,56 @@
+<?php
+// $Id$
+/**
+ * Install the voluntary module, including any custom content types
+ * @file
+ */
+
+/**
+ * Implementation of hook_install().
+ */
+function voluntary_install() {
+  drupal_install_schema('voluntary');
+  create_menu_entries();
+}
+
+/**
+ * Implementation of hook_uninstall().
+ */
+function voluntary_uninstall() {
+  remove_menu_entries();
+menu_rebuild();
+  drupal_uninstall_schema('voluntary');
+}
+
+/**
+ * Implementation of hook_schema().
+ */
+function voluntary_schema() {
+  $schema['voluntary_branches'] = array(
+    'fields' => array(
+      'id' => array(
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not_null' => TRUE
+        ),
+      'name' => array(
+        'type' => 'char',
+        'length' => 100, 
+        'not null' => TRUE,
+        'default' => ''
+        )
+      ),
+    'primary key' => array('id')
+    );
+  return $schema;
+}
+
+function create_menu_entries() {
+
+  $t = get_t();
+  db_query("INSERT INTO {menu_custom} (menu_name, title, description) VALUES ( '%s', '%s', '%s')", 'voluntary', $t('Voluntary'), $t('Menu for the voluntary module'));
+}
+
+function remove_menu_entries() {
+  db_query("DELETE FROM {menu_custom} WHERE menu_name='%s'", 'voluntary');
+}
